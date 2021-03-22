@@ -55,10 +55,8 @@ public class MeshManager : MonoBehaviour
             newObject.GetComponent<MeshRenderer>().material = m;
             newObject.transform.SetParent(cotainer.transform);
             particles.Add(newObject);
-            //newObject.AddComponent<Rigidbody>();
         }
-        //StartCoroutine(RePositionning(particles));
-        MergeMeshByCount(2,5);
+        MergeMeshByCount(2,10);
     }
 
     private void MergeMeshByCount(int minCount, int maxCount)
@@ -107,10 +105,10 @@ public class MeshManager : MonoBehaviour
 
     public void Button_RePositionning()
     {
-        RePositionning(particles);
+        Separate(particles);
     }
 
-    private void RePositionning(List<GameObject> particles)
+    private void Separate(List<GameObject> particles)
     {
         separatePosition = new List<Vector3>();
 
