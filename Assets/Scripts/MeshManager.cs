@@ -47,7 +47,7 @@ public class MeshManager : MonoBehaviour
 
             Mesh newMesh = new Mesh();
             newMesh.vertices = points;
-            //newMesh.uv = uv;
+            newMesh.uv = uv;
             newMesh.triangles = newTriangles;
 
             GameObject newObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
