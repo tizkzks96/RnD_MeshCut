@@ -58,14 +58,16 @@ public class MeshManager : MonoBehaviour
             //newObject.AddComponent<Rigidbody>();
         }
         //StartCoroutine(RePositionning(particles));
-        MergeMeshByCount(4);
+        MergeMeshByCount(2,5);
     }
 
-    private void MergeMeshByCount(int count)
+    private void MergeMeshByCount(int minCount, int maxCount)
     {
         List<GameObject> newParticles = new List<GameObject>();
+        int count = Random.Range(minCount, maxCount);
         for (int i = 0; i < particles.Count; i += count)
         {
+            count = Random.Range(minCount, maxCount);
             List<GameObject> group = new List<GameObject>();
             for (int k = 0; k < count; k++)
             {
@@ -83,9 +85,12 @@ public class MeshManager : MonoBehaviour
     {
         foreach (var item in particles)
         {
-            Destroy(item.GetComponent<BoxCollider>());
-            item.AddComponent<BoxCollider>();
-            item.AddComponent<Rigidbody>();
+            if (item.GetComponent<Rigidbody>() == false)
+            {
+                Destroy(item.GetComponent<BoxCollider>());
+                item.AddComponent<BoxCollider>();
+                item.AddComponent<Rigidbody>();
+            }
         }
     }
 
@@ -93,7 +98,10 @@ public class MeshManager : MonoBehaviour
     {
         foreach (var item in particles)
         {
-            Destroy(item.GetComponent<Rigidbody>());
+            if (item.GetComponent<Rigidbody>())
+            {
+                Destroy(item.GetComponent<Rigidbody>());
+            }
         }
     }
 
@@ -119,6 +127,8 @@ public class MeshManager : MonoBehaviour
 
     private IEnumerator ReturnSeparate(List<GameObject> particles, bool isOrigin)
     {
+        Button_RemoveRigidbody();
+
         float time = 0;
         float maxTime = 1;
 
@@ -148,7 +158,7 @@ public class MeshManager : MonoBehaviour
             for (int i = 0; i < particles.Count; i++)
             {
                 Vector3 newPosition;
-                if (isOrigin)
+                if (isOrigin || separatePosition == null)
                 {
                     newPosition = new Vector3
                     (
@@ -243,6 +253,8 @@ public class MeshManager : MonoBehaviour
 
     public void Button_SaveAsset()
     {
+        MeshMerge(particles);
+
         SaveAsset(newO);
     }
     public void Button_MeshMerge()
