@@ -11,7 +11,7 @@ public class MeshManager : MonoBehaviour
 {
     public GameObject target;
     public int size = 10;
-    Mesh mesh;
+    public Mesh mesh;
     public Material m;
 
     public float gab = 0;
@@ -25,7 +25,7 @@ public class MeshManager : MonoBehaviour
 
     void Start()
     {
-        mesh = target.GetComponent<MeshFilter>().mesh;
+        mesh = target.GetComponent<MeshFilter>().sharedMesh;
 
     }
 
@@ -38,6 +38,7 @@ public class MeshManager : MonoBehaviour
     {
         GameObject cotainer = new GameObject();
         particles = new List<GameObject>();
+        Debug.Log(mesh.triangles.Length);
         for (int i = 0; i < mesh.triangles.Length; i += 3)
         {
             Vector3[] points = new Vector3[3]
@@ -146,7 +147,7 @@ public class MeshManager : MonoBehaviour
             Mesh mesh = item.GetComponent<MeshFilter>().mesh;
             Vector3[] vertices = mesh.vertices;
             gab = vertices[0].z * gab;
-            item.transform.position += Vector3.forward * Random.Range(0, 0.5f);
+            item.transform.position += item.transform.parent.forward * Random.Range(0, 1f);
 
             separatePosition.Add(item.transform.localPosition);
         }
@@ -325,10 +326,12 @@ public class MeshManager : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        var mesh = target.GetComponent<MeshFilter>().mesh;
+        var mesh = target.GetComponent<MeshFilter>().sharedMesh;
         Gizmos.color = Color.red;
 
         Gizmos.color = Color.blue;
+
+        Gizmos.DrawSphere(mesh.vertices[mesh.triangles[0]], 100);
 
         Gizmos.DrawLine(mesh.vertices[mesh.triangles[0]] * size, mesh.vertices[mesh.triangles[1]] * size);
         Gizmos.DrawLine(mesh.vertices[mesh.triangles[1]] * size, mesh.vertices[mesh.triangles[2]] * size);
