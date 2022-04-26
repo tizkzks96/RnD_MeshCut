@@ -9,45 +9,27 @@ using UnityEngine;
 
 public class MeshManager : MonoBehaviour
 {
-    public GameObject target;
-    public int size = 10;
-    public Mesh mesh;
-    public Material m;
+    public GameObject targetPrefab;
+    public Material meshMaterial;
+    public int meshSize = 10;
 
-    public float gab = 0;
+    public float seperateGab = 0;
 
     public GameObject newMeshsContainer;
 
-    List<Vector3> separatePosition;
 
     public List<GameObject> particles;
 
-    private GameObject newO;
+    public bool meshPreview;
+
+    private List<Vector3> separatePosition;
+
+    private Mesh sharedMesh;
+
 
     void Start()
     {
-        mesh = target.GetComponent<MeshFilter>().sharedMesh;
-
-    }
-
-    private void OnDrawGizmos()
-    {
-        var mesh = target.GetComponent<MeshFilter>().sharedMesh;
-        Gizmos.color = Color.red;
-
-        Gizmos.color = Color.blue;
-
-        Gizmos.DrawSphere(mesh.vertices[mesh.triangles[0]], 100);
-
-        Gizmos.DrawLine(mesh.vertices[mesh.triangles[0]] * size, mesh.vertices[mesh.triangles[1]] * size);
-        Gizmos.DrawLine(mesh.vertices[mesh.triangles[1]] * size, mesh.vertices[mesh.triangles[2]] * size);
-        Gizmos.DrawLine(mesh.vertices[mesh.triangles[2]] * size, mesh.vertices[mesh.triangles[0]] * size);
-
-        for (int i = 0; i < mesh.triangles.Length; i += 3)
-        {
-            Gizmos.DrawLine(mesh.vertices[mesh.triangles[i]] * size, mesh.vertices[mesh.triangles[i + 1]] * size);
-            Gizmos.DrawLine(mesh.vertices[mesh.triangles[i + 1]] * size, mesh.vertices[mesh.triangles[i + 2]] * size);
-        }
+        sharedMesh = targetPrefab.GetComponent<MeshFilter>().sharedMesh;
     }
 
     void Update()
@@ -62,6 +44,22 @@ public class MeshManager : MonoBehaviour
         //mesh.RecalculateBounds();
     }
 
+    private void OnDrawGizmos()
+    {
+        if (meshPreview)
+        {
+            var mesh = targetPrefab.GetComponent<MeshFilter>().sharedMesh;
+
+            Gizmos.color = Color.blue;
+
+            for (int i = 0; i < mesh.triangles.Length; i += 3)
+            {
+                Gizmos.DrawLine(mesh.vertices[mesh.triangles[i]] * meshSize, mesh.vertices[mesh.triangles[i + 1]] * meshSize);
+                Gizmos.DrawLine(mesh.vertices[mesh.triangles[i + 1]] * meshSize, mesh.vertices[mesh.triangles[i + 2]] * meshSize);
+            }
+        }
+    }
+
     private void CreateMesh_Near()
     {
        
@@ -71,21 +69,21 @@ public class MeshManager : MonoBehaviour
     {
         GameObject cotainer = new GameObject();
         particles = new List<GameObject>();
-        Debug.Log(mesh.triangles.Length);
-        for (int i = 0; i < mesh.triangles.Length; i += 3)
+        Debug.Log(sharedMesh.triangles.Length);
+        for (int i = 0; i < sharedMesh.triangles.Length; i += 3)
         {
             Vector3[] points = new Vector3[3]
             {
-                mesh.vertices[mesh.triangles[i]] * size,
-                mesh.vertices[mesh.triangles[i + 1]] * size,
-                mesh.vertices[mesh.triangles[i + 2]] * size
+                sharedMesh.vertices[sharedMesh.triangles[i]] * meshSize,
+                sharedMesh.vertices[sharedMesh.triangles[i + 1]] * meshSize,
+                sharedMesh.vertices[sharedMesh.triangles[i + 2]] * meshSize
             };
 
             Vector2[] uv = new Vector2[3] 
             {
-                mesh.uv[mesh.triangles[i]],
-                mesh.uv[mesh.triangles[i + 1]],
-                mesh.uv[mesh.triangles[i + 2]]
+                sharedMesh.uv[sharedMesh.triangles[i]],
+                sharedMesh.uv[sharedMesh.triangles[i + 1]],
+                sharedMesh.uv[sharedMesh.triangles[i + 2]]
             };
 
             int[] newTriangles = new int[3]
@@ -103,7 +101,7 @@ public class MeshManager : MonoBehaviour
 
             GameObject newObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
             newObject.GetComponent<MeshFilter>().mesh = newMesh;
-            newObject.GetComponent<MeshRenderer>().material = m;
+            newObject.GetComponent<MeshRenderer>().material = meshMaterial;
             newObject.transform.SetParent(cotainer.transform);
             particles.Add(newObject);
         }
@@ -111,8 +109,8 @@ public class MeshManager : MonoBehaviour
 
     private void MergeMeshByCount(int minCount, int maxCount)
     {
-        List<GameObject> newParticles = new List<GameObject>();
         int count;
+        List<GameObject> newParticles = new List<GameObject>();
         for (int i = 0; i < particles.Count; i += count)
         {
             count = Random.Range(minCount, maxCount);
@@ -136,16 +134,61 @@ public class MeshManager : MonoBehaviour
         {
             Mesh mesh = item.GetComponent<MeshFilter>().mesh;
             Vector3[] vertices = mesh.vertices;
-            gab = vertices[0].z * gab;
+            seperateGab = vertices[0].z * seperateGab;
             item.transform.position += item.transform.parent.forward * Random.Range(0, 1f);
 
             separatePosition.Add(item.transform.localPosition);
         }
     }
 
+    private void SaveAsset(GameObject target)
+    {
+        var mf = target.GetComponent<MeshFilter>();
+        if (mf)
+        {
+            var savePath = "Assets/" + target.name + ".asset";
+            Debug.Log("Saved Mesh to:" + savePath);
+            AssetDatabase.CreateAsset(mf.mesh, savePath);
+        }
+    }
+
+    private void ReArrange()
+    {
+        Matrix4x4 localToWorld = transform.localToWorldMatrix;
+        Dictionary<int, float> distances = new Dictionary<int, float>();
+        List<GameObject> newdistances = new List<GameObject>();
+
+        var flag = localToWorld.MultiplyPoint3x4(particles[0].GetComponent<MeshFilter>().mesh.vertices[0]);
+
+        for (int i = 0; i < particles.Count; i++)
+        {
+            var pos = localToWorld.MultiplyPoint3x4(particles[i].GetComponent<MeshFilter>().mesh.vertices[0]);
+            distances.Add(i, Vector3.Distance(flag, pos));
+        }
+        StringBuilder sb = new StringBuilder();
+        // Use OrderBy method.
+        foreach (var item in distances.OrderBy(i => i.Value))
+        {
+            newdistances.Add(particles[item.Key]);
+            sb.AppendLine(item.ToString());
+        }
+        Debug.Log(sb);
+        particles = newdistances;
+
+        //하이어라키에서 재정렬
+        foreach (var item in particles)
+        {
+            item.transform.SetParent(newMeshsContainer.transform.parent);
+        }
+        foreach (var item in particles)
+        {
+            item.transform.SetParent(newMeshsContainer.transform);
+        }
+    }
+
     private IEnumerator ReturnSeparate(List<GameObject> particles, bool isOrigin)
     {
-        Button_RemoveRigidbody();
+        RemoveRigidbody();
 
         float time = 0;
         float maxTime = 1;
@@ -209,9 +252,8 @@ public class MeshManager : MonoBehaviour
 
     private float Clamp(float range, float init, float target)
     {
-        float value;
         var total = Mathf.Abs(target - init);
-        value = total * range;
+        float value = total * range;
         if (target < init)
         {
             value *= -1;
@@ -228,75 +270,45 @@ public class MeshManager : MonoBehaviour
         }
         CombineInstance[] combine = new CombineInstance[meshFilters.Count];
 
-        int i = 0;
-        while (i < meshFilters.Count)
+        for(int i = 0; i < meshFilters.Count; i++)
         {
             combine[i].mesh = meshFilters[i].sharedMesh;
             combine[i].transform = meshFilters[i].transform.localToWorldMatrix;
             meshFilters[i].gameObject.SetActive(false);
-
-            i++;
         }
-        newO = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        newO.GetComponent<MeshRenderer>().material = m;
-        newO.GetComponent<MeshFilter>().mesh = new Mesh();
-        newO.GetComponent<MeshFilter>().mesh.CombineMeshes(combine);
-        newO.gameObject.SetActive(true);
-        newO.transform.SetParent(newMeshsContainer.transform);
-        return newO;
+
+        GameObject mergedMesh = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        mergedMesh.GetComponent<MeshRenderer>().material = meshMaterial;
+        mergedMesh.GetComponent<MeshFilter>().mesh = new Mesh();
+        mergedMesh.GetComponent<MeshFilter>().mesh.CombineMeshes(combine);
+        mergedMesh.gameObject.SetActive(true);
+        mergedMesh.transform.SetParent(newMeshsContainer.transform);
+        return mergedMesh;
     }
 
-    private void SaveAsset(GameObject target)
+    private void RemoveRigidbody()
     {
-        var mf = target.GetComponent<MeshFilter>();
-        if (mf)
+        foreach (var item in particles)
         {
-            var savePath = "Assets/" + target.name + ".asset";
-            Debug.Log("Saved Mesh to:" + savePath);
-            AssetDatabase.CreateAsset(mf.mesh, savePath);
+            if (item.GetComponent<Rigidbody>())
+            {
+                Destroy(item.GetComponent<Rigidbody>());
+            }
         }
     }
+
 
     //인접한 mesh 우선순위로 재정렬
     public void Button_ReArragne()
     {
-        Matrix4x4 localToWorld = transform.localToWorldMatrix;
-        Dictionary<int, float> distances = new Dictionary<int, float>();
-        List<GameObject> newdistances = new List<GameObject>();
-
-        var flag = localToWorld.MultiplyPoint3x4(particles[0].GetComponent<MeshFilter>().mesh.vertices[0]);
-
-        for (int i = 0; i < particles.Count; i++)
-        {
-            var pos = localToWorld.MultiplyPoint3x4(particles[i].GetComponent<MeshFilter>().mesh.vertices[0]);
-            distances.Add(i, Vector3.Distance(flag, pos));
-        }
-        StringBuilder sb = new StringBuilder();
-        // Use OrderBy method.
-        foreach (var item in distances.OrderBy(i => i.Value))
-        {
-            newdistances.Add(particles[item.Key]);
-            sb.AppendLine(item.ToString());
-        }
-        Debug.Log(sb);
-        particles = newdistances;
-
-        //하이어라키에서 재정렬
-        foreach (var item in particles)
-        {
-            item.transform.SetParent(newMeshsContainer.transform.parent);
-        }
-        foreach (var item in particles)
-        {
-            item.transform.SetParent(newMeshsContainer.transform);
-        }
+        ReArrange();
     }
 
     public void Button_SaveAsset()
     {
-        MeshMerge(particles);
+        GameObject mergedMesh = MeshMerge(particles);
 
-        SaveAsset(newO);
+        SaveAsset(mergedMesh);
     }
 
     public void Button_MeshMerge()
@@ -329,13 +341,7 @@ public class MeshManager : MonoBehaviour
 
     public void Button_RemoveRigidbody()
     {
-        foreach (var item in particles)
-        {
-            if (item.GetComponent<Rigidbody>())
-            {
-                Destroy(item.GetComponent<Rigidbody>());
-            }
-        }
+        RemoveRigidbody();
     }
 
     public void Button_RePositionning()
