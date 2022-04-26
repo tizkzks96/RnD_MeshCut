@@ -22,11 +22,44 @@ public class MeshManager : MonoBehaviour
 
     public List<GameObject> particles;
 
+    private GameObject newO;
 
     void Start()
     {
         mesh = target.GetComponent<MeshFilter>().sharedMesh;
 
+    }
+
+    private void OnDrawGizmos()
+    {
+        var mesh = target.GetComponent<MeshFilter>().sharedMesh;
+        Gizmos.color = Color.red;
+
+        Gizmos.color = Color.blue;
+
+        Gizmos.DrawSphere(mesh.vertices[mesh.triangles[0]], 100);
+
+        Gizmos.DrawLine(mesh.vertices[mesh.triangles[0]] * size, mesh.vertices[mesh.triangles[1]] * size);
+        Gizmos.DrawLine(mesh.vertices[mesh.triangles[1]] * size, mesh.vertices[mesh.triangles[2]] * size);
+        Gizmos.DrawLine(mesh.vertices[mesh.triangles[2]] * size, mesh.vertices[mesh.triangles[0]] * size);
+
+        for (int i = 0; i < mesh.triangles.Length; i += 3)
+        {
+            Gizmos.DrawLine(mesh.vertices[mesh.triangles[i]] * size, mesh.vertices[mesh.triangles[i + 1]] * size);
+            Gizmos.DrawLine(mesh.vertices[mesh.triangles[i + 1]] * size, mesh.vertices[mesh.triangles[i + 2]] * size);
+        }
+    }
+
+    void Update()
+    {
+        //for (var i = 0; i < vertices.Length; i++)
+        //{
+        //    vertices[i] += Vector3.up * Time.deltaTime;
+        //}
+
+        //// assign the local vertices array into the vertices array of the Mesh.
+        //mesh.vertices = vertices;
+        //mesh.RecalculateBounds();
     }
 
     private void CreateMesh_Near()
@@ -76,21 +109,6 @@ public class MeshManager : MonoBehaviour
         }
     }
 
-    public void Button_CreateMesh()
-    {
-        CreateMesh();
-    }
-
-    public void Button_CreateMesh_Near()
-    {
-        CreateMesh_Near();
-    }
-
-    public void Button_MergeMesh()
-    {
-        MergeMeshByCount(5, 10);
-    }
-
     private void MergeMeshByCount(int minCount, int maxCount)
     {
         List<GameObject> newParticles = new List<GameObject>();
@@ -108,34 +126,6 @@ public class MeshManager : MonoBehaviour
         }
         particles.Clear();
         particles = newParticles;
-    }
-    public void Button_AddRigidbody()
-    {
-        foreach (var item in particles)
-        {
-            if (item.GetComponent<Rigidbody>() == false)
-            {
-                Destroy(item.GetComponent<BoxCollider>());
-                item.AddComponent<BoxCollider>();
-                item.AddComponent<Rigidbody>();
-            }
-        }
-    }
-
-    public void Button_RemoveRigidbody()
-    {
-        foreach (var item in particles)
-        {
-            if (item.GetComponent<Rigidbody>())
-            {
-                Destroy(item.GetComponent<Rigidbody>());
-            }
-        }
-    }
-
-    public void Button_RePositionning()
-    {
-        Separate(particles);
     }
 
     private void Separate(List<GameObject> particles)
@@ -217,7 +207,6 @@ public class MeshManager : MonoBehaviour
         }
     }
 
-
     private float Clamp(float range, float init, float target)
     {
         float value;
@@ -230,18 +219,6 @@ public class MeshManager : MonoBehaviour
         return init + value;
     }
 
-    public void Button_ReturnSeparate()
-    {
-        StartCoroutine(ReturnSeparate(particles, false));
-    }
-
-    public void Button_ReturnOrigin()
-    {
-        StartCoroutine(ReturnSeparate(particles, true));
-    }
-
-
-    GameObject newO;
     private GameObject MeshMerge(List<GameObject> particles)
     {
         List<MeshFilter> meshFilters = new List<MeshFilter>();
@@ -268,7 +245,8 @@ public class MeshManager : MonoBehaviour
         newO.transform.SetParent(newMeshsContainer.transform);
         return newO;
     }
-    void SaveAsset(GameObject target)
+
+    private void SaveAsset(GameObject target)
     {
         var mf = target.GetComponent<MeshFilter>();
         if (mf)
@@ -279,18 +257,8 @@ public class MeshManager : MonoBehaviour
         }
     }
 
-    public void Button_SaveAsset()
-    {
-        MeshMerge(particles);
-
-        SaveAsset(newO);
-    }
-    public void Button_MeshMerge()
-    {
-        MeshMerge(particles);
-    }
     //인접한 mesh 우선순위로 재정렬
-    public void ReArragne()
+    public void Button_ReArragne()
     {
         Matrix4x4 localToWorld = transform.localToWorldMatrix;
         Dictionary<int, float> distances = new Dictionary<int, float>();
@@ -324,36 +292,70 @@ public class MeshManager : MonoBehaviour
         }
     }
 
-    private void OnDrawGizmos()
+    public void Button_SaveAsset()
     {
-        var mesh = target.GetComponent<MeshFilter>().sharedMesh;
-        Gizmos.color = Color.red;
+        MeshMerge(particles);
 
-        Gizmos.color = Color.blue;
-
-        Gizmos.DrawSphere(mesh.vertices[mesh.triangles[0]], 100);
-
-        Gizmos.DrawLine(mesh.vertices[mesh.triangles[0]] * size, mesh.vertices[mesh.triangles[1]] * size);
-        Gizmos.DrawLine(mesh.vertices[mesh.triangles[1]] * size, mesh.vertices[mesh.triangles[2]] * size);
-        Gizmos.DrawLine(mesh.vertices[mesh.triangles[2]] * size, mesh.vertices[mesh.triangles[0]] * size);
-
-        //for (int i = 0; i < mesh.triangles.Length; i += 3)
-        //{
-        //    Gizmos.DrawLine(mesh.vertices[mesh.triangles[i]] * size, mesh.vertices[mesh.triangles[i + 1]] * size);
-        //    Gizmos.DrawLine(mesh.vertices[mesh.triangles[i + 1]] * size, mesh.vertices[mesh.triangles[i + 2]] * size);
-        //}
+        SaveAsset(newO);
     }
 
-    void Update()
+    public void Button_MeshMerge()
     {
-        //for (var i = 0; i < vertices.Length; i++)
-        //{
-        //    vertices[i] += Vector3.up * Time.deltaTime;
-        //}
+        MeshMerge(particles);
+    }
 
-        //// assign the local vertices array into the vertices array of the Mesh.
-        //mesh.vertices = vertices;
-        //mesh.RecalculateBounds();
+    public void Button_ReturnSeparate()
+    {
+        StartCoroutine(ReturnSeparate(particles, false));
+    }
+
+    public void Button_ReturnOrigin()
+    {
+        StartCoroutine(ReturnSeparate(particles, true));
+    }
+
+    public void Button_AddRigidbody()
+    {
+        foreach (var item in particles)
+        {
+            if (item.GetComponent<Rigidbody>() == false)
+            {
+                Destroy(item.GetComponent<BoxCollider>());
+                item.AddComponent<BoxCollider>();
+                item.AddComponent<Rigidbody>();
+            }
+        }
+    }
+
+    public void Button_RemoveRigidbody()
+    {
+        foreach (var item in particles)
+        {
+            if (item.GetComponent<Rigidbody>())
+            {
+                Destroy(item.GetComponent<Rigidbody>());
+            }
+        }
+    }
+
+    public void Button_RePositionning()
+    {
+        Separate(particles);
+    }
+
+    public void Button_CreateMesh()
+    {
+        CreateMesh();
+    }
+
+    public void Button_CreateMesh_Near()
+    {
+        CreateMesh_Near();
+    }
+
+    public void Button_MergeMesh()
+    {
+        MergeMeshByCount(5, 10);
     }
 }
 
