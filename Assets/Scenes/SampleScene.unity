@@ -553,13 +553,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 147b05597700280459a40334dfbde8c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 0}
-  size: 10
-  mesh: {fileID: 0}
-  m: {fileID: 2100000, guid: 7bdd2d5e8afa8ac47bd13e566fba9154, type: 2}
-  gab: 0
+  targetPrefab: {fileID: 0}
+  meshMaterial: {fileID: 0}
+  meshSize: 10
+  seperateGab: 0
   newMeshsContainer: {fileID: 1226649164}
   particles: []
+  meshPreview: 0
 --- !u!1 &480927949
 GameObject:
   m_ObjectHideFlags: 0
@@ -1104,13 +1104,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 147b05597700280459a40334dfbde8c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 610992920}
-  size: 100
-  mesh: {fileID: 0}
-  m: {fileID: 2100000, guid: a8685b196886a2f4b88963f071bc7a10, type: 2}
-  gab: 0
+  targetPrefab: {fileID: 0}
+  meshMaterial: {fileID: 0}
+  meshSize: 10
+  seperateGab: 0
   newMeshsContainer: {fileID: 1226649164}
   particles: []
+  meshPreview: 0
 --- !u!1001 &610992919
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1172,11 +1172,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e05b0a397878f3d438873252b4e5339c, type: 3}
---- !u!1 &610992920 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: e05b0a397878f3d438873252b4e5339c, type: 3}
-  m_PrefabInstance: {fileID: 610992919}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &639257351
 GameObject:
   m_ObjectHideFlags: 0
