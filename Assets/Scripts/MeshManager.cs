@@ -1,11 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
-using System.Timers;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Jobs;
+using Unity.Burst;
+using Unity.Jobs;
+using Unity.Collections;
 
 public class MeshManager : MonoBehaviour
 {
@@ -298,6 +300,70 @@ public class MeshManager : MonoBehaviour
     }
 
 
+    [BurstCompile]
+    struct CreateMeshJob : IJobParallelForTransform
+    {
+        public NativeArray<Vector3> objectVelocities;
+
+        public Vector3 bounds;
+        public Vector3 center;
+
+        public float jobDeltaTime;
+        public float time;
+        public float swimSpeed;
+        public float turnSpeed;
+        public int swimChangeFrequency;
+
+        public float seed;
+
+
+
+        public void Execute(int i, TransformAccess transform)
+        {
+            Vector3 currentVelocity = objectVelocities[i];
+
+
+            transform.position +=
+            transform.localToWorldMatrix.MultiplyVector(new Vector3(0, 0, 1)) *
+            swimSpeed *
+            jobDeltaTime;
+
+            if (currentVelocity != Vector3.zero)
+            {
+                transform.rotation =
+                Quaternion.Lerp(transform.rotation,
+                Quaternion.LookRotation(currentVelocity), turnSpeed * jobDeltaTime);
+            }
+
+            Vector3 currentPosition = transform.position;
+
+            bool randomise = true;
+
+            if (currentPosition.x > center.x + bounds.x / 2 ||
+                currentPosition.x < center.x - bounds.x / 2 ||
+                currentPosition.z > center.z + bounds.z / 2 ||
+                currentPosition.z < center.z - bounds.z / 2)
+            {
+                Vector3 internalPosition = new Vector3(center.x,
+                0,
+                center.z);
+
+                currentVelocity = (internalPosition - currentPosition).normalized;
+
+                objectVelocities[i] = currentVelocity;
+
+                transform.rotation = Quaternion.Lerp(transform.rotation,
+                Quaternion.LookRotation(currentVelocity),
+                turnSpeed * jobDeltaTime * 2);
+
+                randomise = false;
+            }
+        }
+    }
+
+
+    #region Button
+
     //인접한 mesh 우선순위로 재정렬
     public void Button_ReArragne()
     {
@@ -363,6 +429,7 @@ public class MeshManager : MonoBehaviour
     {
         MergeMeshByCount(5, 10);
     }
+    #endregion
 }
 
 class Triangle
